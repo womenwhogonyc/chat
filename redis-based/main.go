@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strings"
 
 	"github.com/gorilla/mux"
 	"github.com/timehop/jimmy/redis"
@@ -33,6 +34,10 @@ func main() {
 	}
 }
 
+func foo2() (string, error) {
+	return "foo", nil
+}
+
 // MY Docs!!!!!
 func HandleChatRoom(w http.ResponseWriter, r *http.Request) {
 	roomID := mux.Vars(r)["room_id"]
@@ -43,8 +48,20 @@ func HandleNewMessage(w http.ResponseWriter, r *http.Request) {
 	roomID := mux.Vars(r)["room_id"]
 	r.ParseForm()
 	message := r.FormValue("message")
-	fmt.Println(message)
+	if message == "" {
+		return
+	}
+	Redis.LPush("messages:"+roomID, message)
 }
 
 func HandleGetMessages(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "text/html")
+
+	roomID := mux.Vars(r)["room_id"]
+	messages, err := Redis.LRange("messages:"+roomID, 0, -1)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+
+	w.Write([]byte(strings.Join(messages, "<br/>")))
 }
