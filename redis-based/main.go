@@ -13,6 +13,7 @@ import (
 var Redis redis.Pool
 
 func main() {
+
 	// Configure and set up redis.
 	var err error
 	Redis, err = redis.NewPool("redis://localhost:6379", redis.DefaultConfig)
