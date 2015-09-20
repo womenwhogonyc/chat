@@ -1,7 +1,7 @@
 package main
 
 import (
-	"fmt"
+	"html/template"
 	"log"
 	"net/http"
 	"strings"
@@ -34,14 +34,32 @@ func main() {
 	}
 }
 
-func foo2() (string, error) {
-	return "foo", nil
+type ChatRoom struct {
+	RoomID       string
+	Messages     []string
+	CurrentIndex int
 }
 
 // MY Docs!!!!!
 func HandleChatRoom(w http.ResponseWriter, r *http.Request) {
 	roomID := mux.Vars(r)["room_id"]
-	w.Write([]byte(fmt.Sprintf("Chat room '%s' is coming soon!", roomID)))
+
+	t, err := template.ParseFiles("chatroom.html")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+
+	messages, err := Redis.LRange("messages:"+roomID, -100, -1)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+
+	chatroom := ChatRoom{
+		RoomID:   roomID,
+		Messages: messages,
+	}
+
+	t.Execute(w, chatroom)
 }
 
 func HandleNewMessage(w http.ResponseWriter, r *http.Request) {
@@ -51,7 +69,12 @@ func HandleNewMessage(w http.ResponseWriter, r *http.Request) {
 	if message == "" {
 		return
 	}
-	Redis.LPush("messages:"+roomID, message)
+	_, err := Redis.RPush("messages:"+roomID, message)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+
+	http.Redirect(w, r, "/chat/"+roomID, http.StatusFound)
 }
 
 func HandleGetMessages(w http.ResponseWriter, r *http.Request) {
