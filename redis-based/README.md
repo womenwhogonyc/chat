@@ -1,0 +1,1 @@
+This directory shows how to build a chat app backed by redis.
