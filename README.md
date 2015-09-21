@@ -9,6 +9,7 @@ and used the websockets package here: golang.org/x/net/websocket
 
 Rooz, one of our mentors, also suggested bolt storage api to add persistence to the app between browser sessions 
 https://github.com/boltdb/bolt
+Additional information about bolt here: https://www.progville.com/go/bolt-embedded-db-golang/
 
 Andrey added a time parser.
 
